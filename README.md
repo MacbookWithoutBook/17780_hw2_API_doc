@@ -1,5 +1,8 @@
 # 17780_hw2_API_doc
 
+## For Part 1:
+Follow this [Google doc] (https://docs.google.com/document/d/1t1kePjgSgyjAz5gUpCuPrLqno0TYj7wql8JEjT26VNY/edit)
+
 ## For Part 2:
 In this repo, `java/net_modified/HttpURLConnection.java` is modified. Only the Javadoc of this file is modified, please ignore the function's body since some of them are deleted to remove the compile errors. There will be some "duplicated module" issues if the whole JDK is cloned here, so I just keep `HttpURLConnection.java` and add the necessary classes in `/net`. These empty classes in `/net` are also used to remove compile errors.
 
