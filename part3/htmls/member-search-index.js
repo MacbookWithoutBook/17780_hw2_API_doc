@@ -1,0 +1,1 @@
+memberSearchIndex = [{"p":"part3","c":"Thermometer","l":"getTemperatureInCelsius()"},{"p":"part3","c":"Thermometer","l":"getTemperatureInFahrenheit()"},{"p":"part3","c":"Thermometer","l":"setTemperatureInCelsius(double)"},{"p":"part3","c":"Thermometer","l":"setTemperatureInFahrenheit(double)"}];updateSearchResults();
