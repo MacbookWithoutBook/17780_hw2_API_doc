@@ -1,1 +1,0 @@
-typeSearchIndex = [{"l":"All Classes and Interfaces","u":"allclasses-index.html"},{"p":"java.net_modified","l":"HttpURLConnection"}];updateSearchResults();
