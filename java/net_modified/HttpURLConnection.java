@@ -26,84 +26,124 @@
 package java.net_modified;
 
 import java.io.InputStream;
-import java.net.HttpRetryException;
-import java.net.SocketPermission;
-import java.net.URLPermission;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.security.Permission;
 import java.util.Date;
 import java.net.*;
 
 /**
- * A URLConnection with support for HTTP-specific features. See
-* <A HREF="http://www.w3.org/pub/WWW/Protocols/"> the spec </A> for
-* details.
-* <p>
-*
-* Each HttpURLConnection instance is used to make a single request
-* but the underlying network connection to the HTTP server may be
-* transparently shared by other instances. Calling the close() methods
-* on the InputStream or OutputStream of an HttpURLConnection
-* after a request may free network resources associated with this
-* instance but has no effect on any shared persistent connection.
-* Calling the disconnect() method may close the underlying socket
-* if a persistent connection is otherwise idle at that time.
-*
-* <P>The HTTP protocol handler has a few settings that can be accessed through
-* System Properties. This covers
-* <a href="doc-files/net-properties.html#Proxies">Proxy settings</a> as well as
-* <a href="doc-files/net-properties.html#MiscHTTP"> various other settings</a>.
-* </P>
-* <p>
-* <b>Security permissions</b>
-* <p>
-* If a security manager is installed, and if a method is called which results in an
-* attempt to open a connection, the caller must possess either:
-* <ul><li>a "connect" {@link SocketPermission} to the host/port combination of the
-* destination URL or</li>
-* <li>a {@link URLPermission} that permits this request.</li>
-* </ul><p>
-* If automatic redirection is enabled, and this request is redirected to another
-* destination, then the caller must also have permission to connect to the
-* redirected host/URL.
-*
-* @see     java.net.HttpURLConnection#disconnect()
-* @since 1.1
-*/
+ * This class represents an HTTP-specific implementation of a {@link URLConnection} 
+ * that provides methods for interacting with resources via HTTP. It supports features 
+ * such as handling HTTP requests and responses. 
+ * 
+ * <p>Each {@code HttpURLConnection} instance is designed to handle a single HTTP request, 
+ * although the underlying network connection to the HTTP server may be reused by 
+ * other instances. Closing the InputStream or OutputStream associated 
+ * with the {@code HttpURLConnection} may release network resources, but will not 
+ * affect shared persistent connections. Calling {@link #disconnect()} may close 
+ * the underlying socket if no other connections are using it.
+ *
+ * <p>The behavior of HTTP connections can be controlled via system properties, 
+ * such as proxy settings and miscellaneous HTTP settings.
+ * 
+ * <h3>Constructor Usage</h3>
+ * <p>{@code HttpURLConnection} is an abstract class, and instances of this class 
+ * are typically obtained by calling {@link URL#openConnection()} on a {@code URL} 
+ * object that uses the HTTP protocol. For example:</p>
+ * 
+ * <pre>
+ * URL url = new URL("http://www.example.com");
+ * HttpURLConnection httpConn = (HttpURLConnection) url.openConnection();
+ * </pre>
+ * 
+ * <p>This will create an instance of a concrete subclass of {@code HttpURLConnection}, 
+ * depending on the protocol handler available in the environment.</p>
+ * 
+ * <h3>Security Considerations</h3>
+ * <p>If a security manager is installed, the caller must have the appropriate permissions 
+ * to open a connection. The caller needs either:</p>
+ * <ul>
+ *   <li>A "connect" {@link SocketPermission} for the host/port combination of the 
+ *       destination URL.</li>
+ *   <li>A {@link URLPermission} that allows the request.</li>
+ * </ul>
+ * 
+ * <p>If automatic redirection is enabled, the caller must also possess the necessary 
+ * permissions to connect to the redirected host/URL.</p>
+ * 
+ * <p><b>Note:</b> This class is not thread-safe. Each instance should be used by 
+ * one thread at a time.</p>
+ * 
+ * @see     java.net.HttpURLConnection#disconnect()
+ * @since   1.1
+ */
+
 public abstract class HttpURLConnection extends URLConnection {
     /* instance variables */
 
-    /**
-     * The HTTP method (GET,POST,PUT,etc.).
-    */
+     /**
+     * The HTTP method used for the request (e.g., "GET", "POST", "PUT", etc.).
+     * 
+     * <p>By default, this is set to "GET". This field determines which HTTP method 
+     * will be sent in the request. Valid values include standard HTTP methods such as 
+     * "GET", "POST", "PUT", and "DELETE". Other custom methods may also be supported 
+     * by the server.
+     *
+     * <p><b>Note:</b> The method must be set before establishing the connection. 
+     * After the request is sent, modifying this value will have no effect.
+     *
+     * @see #setRequestMethod(String)
+     */
     protected String method = "GET";
 
     /**
-     * The chunk-length when using chunked encoding streaming mode for output.
-    * A value of {@code -1} means chunked encoding is disabled for output.
-    * @since 1.5
-    */
+     * The chunk-length to be used when the request body is sent using chunked encoding.
+     * 
+     * <p>A value of {@code -1} indicates that chunked encoding is disabled. When chunked 
+     * encoding is enabled, the request body is split into smaller chunks, and each chunk 
+     * is sent separately. This allows the body to be sent without knowing its size 
+     * beforehand.
+     *
+     * <p><b>Important:</b> This value must be set before the request is initiated, 
+     * and changing it after the request is started will have no effect.
+     *
+     * <p>Use this option for sending large bodies where the size is not known in advance.
+     *
+     * @since 1.5
+     * @see #setChunkedStreamingMode(int)
+     */
     protected int chunkLength = -1;
 
     /**
-     * The fixed content-length when using fixed-length streaming mode.
-    * A value of {@code -1} means fixed-length streaming mode is disabled
-    * for output.
-    *
-    * <P> <B>NOTE:</B> {@link #fixedContentLengthLong} is recommended instead
-    * of this field, as it allows larger content lengths to be set.
-    *
-    * @since 1.5
-    */
+     * The fixed content-length in bytes for output when using fixed-length streaming mode.
+     * 
+     * <p>A value of {@code -1} means that fixed-length streaming mode is disabled. 
+     * When enabled, the client sends the exact number of bytes specified. This can 
+     * be more efficient when the size of the request body is known in advance.
+     *
+     * <p><b>Note:</b> It is recommended to use {@link #fixedContentLengthLong} instead 
+     * of this field, as it allows for larger content lengths to be set. Changing this 
+     * field after initiating the connection will not affect the current request.
+     *
+     * @since 1.5
+     * @see #setFixedLengthStreamingMode(int)
+     */
     protected int fixedContentLength = -1;
 
     /**
-     * The fixed content-length when using fixed-length streaming mode.
-    * A value of {@code -1} means fixed-length streaming mode is disabled
-    * for output.
-    *
-    * @since 1.7
-    */
+     * The fixed content-length in bytes for output when using fixed-length streaming mode.
+     * 
+     * <p>A value of {@code -1} means that fixed-length streaming mode is disabled. 
+     * This field supports content lengths larger than those allowed by {@code fixedContentLength}.
+     * When enabled, the client sends the exact number of bytes specified in the request.
+     *
+     * <p>Using fixed-length streaming can improve performance by allowing the connection 
+     * to be reused, but it requires knowing the size of the request body in advance.
+     *
+     * @since 1.7
+     * @see #setFixedLengthStreamingMode(long)
+     */
     protected long fixedContentLengthLong = -1;
 
     /**
@@ -154,16 +194,31 @@ public abstract class HttpURLConnection extends URLConnection {
     }
 
     /**
-     * Returns the key for the {@code n}<sup>th</sup> header field.
-    * Some implementations may treat the {@code 0}<sup>th</sup>
-    * header field as special, i.e. as the status line returned by the HTTP
-    * server. In this case, {@link #getHeaderField(int) getHeaderField(0)} returns the status
-    * line, but {@code getHeaderFieldKey(0)} returns null.
-    *
-    * @param   n   an index, where {@code n >=0}.
-    * @return  the key for the {@code n}<sup>th</sup> header field,
-    *          or {@code null} if the key does not exist.
-    */
+     * Returns the key of the HTTP header field at the specified index {@code n}. 
+     * The 0th header field may be treated as the HTTP status line, in which case 
+     * this method will return {@code null} for {@code n = 0}.
+     *
+     * <p><b>Usage Example:</b></p>
+     * <pre>{@code
+     * HttpURLConnection httpConn = (HttpURLConnection) url.openConnection();
+     * httpConn.setRequestMethod("GET");
+     * httpConn.connect();
+     *
+     * String headerKey = httpConn.getHeaderFieldKey(1);  // Get key of the 1st header field
+     * if (headerKey != null) {
+     *     System.out.println("Header Key: " + headerKey);
+     * } else {
+     *     System.out.println("No header key found at index 1.");
+     * }
+     * }</pre>
+     *
+     * @param n the index of the header field, where {@code n >= 0}.
+     * @return the key for the nth header field, or {@code null} if no key exists 
+     *         at the specified index.
+     *
+     * @see java.net.URLConnection#getHeaderField(int)
+     * @see java.net.HttpURLConnection#getHeaderField(int)
+     */
     public String getHeaderFieldKey (int n) {
         return null;
     }
@@ -279,20 +334,44 @@ public abstract class HttpURLConnection extends URLConnection {
     }
 
     /**
-     * Returns the value for the {@code n}<sup>th</sup> header field.
-    * Some implementations may treat the {@code 0}<sup>th</sup>
-    * header field as special, i.e. as the status line returned by the HTTP
-    * server.
-    * <p>
-    * This method can be used in conjunction with the
-    * {@link #getHeaderFieldKey getHeaderFieldKey} method to iterate through all
-    * the headers in the message.
-    *
-    * @param   n   an index, where {@code n>=0}.
-    * @return  the value of the {@code n}<sup>th</sup> header field,
-    *          or {@code null} if the value does not exist.
-    * @see     java.net.HttpURLConnection#getHeaderFieldKey(int)
-    */
+     * Returns the value of the HTTP header field at the specified index {@code n}. 
+     * This method allows access to HTTP header values returned by the server in 
+     * the response. Header fields are indexed starting from 0, where some 
+     * implementations may treat the 0th field as the status line (e.g., "HTTP/1.1 200 OK").
+     *
+     * <p>This method can be used in conjunction with {@link #getHeaderFieldKey(int)} 
+     * to iterate over all the headers in the HTTP response. For example, you can 
+     * retrieve both the key and value of each header by using the two methods 
+     * together in a loop.
+     *
+     * <p>If the header at the specified index does not exist, this method returns 
+     * {@code null}. It also returns {@code null} if the index is out of bounds.
+     *
+     * <p><b>Usage Example:</b></p>
+     * <pre>{@code
+     * HttpURLConnection httpConn = (HttpURLConnection) url.openConnection();
+     * httpConn.setRequestMethod("GET");
+     * httpConn.connect();
+     * 
+     * // Iterate over all headers
+     * for (int i = 0;; i++) {
+     *     String headerKey = httpConn.getHeaderFieldKey(i);
+     *     String headerValue = httpConn.getHeaderField(i);
+     *     if (headerKey == null && headerValue == null) {
+     *         break; // No more headers
+     *     }
+     *     System.out.println(headerKey + ": " + headerValue);
+     * }
+     * }</pre>
+     *
+     * @param n the index of the header field, where {@code n >= 0}.
+     * @return the value of the nth header field, or {@code null} if the header 
+     *         does not exist or if the index is out of bounds.
+     *
+     * @see java.net.HttpURLConnection#getHeaderFieldKey(int)
+     * @see java.net.URLConnection#getHeaderField(int)
+     */
+    @Override
     public String getHeaderField(int n) {
         return null;
     }
@@ -379,17 +458,36 @@ public abstract class HttpURLConnection extends URLConnection {
     }
 
     /**
-     * Returns a {@code boolean} indicating
-    * whether or not HTTP redirects (3xx) should
-    * be automatically followed.
-    *
-    * @return {@code true} if HTTP redirects should
-    * be automatically followed, {@code false} if not.
-    * @see #setFollowRedirects(boolean)
-    */
+     * Returns a {@code boolean} indicating whether HTTP redirects (3xx responses) 
+     * should be automatically followed by the current connection. If redirects 
+     * are followed, the client will automatically handle 3xx status codes 
+     * by making additional requests to the new location provided in the 
+     * response's "Location" header.
+     *
+     * <p>This is a global setting for all HTTP connections and affects 
+     * all instances of {@code HttpURLConnection}. The default value is 
+     * {@code true}, meaning redirects are automatically followed unless 
+     * explicitly disabled.
+     *
+     * <p><b>Usage Example:</b></p>
+     * <pre>{@code
+     * boolean followRedirects = HttpURLConnection.getFollowRedirects();
+     * if (followRedirects) {
+     *     System.out.println("Redirects are automatically followed.");
+     * } else {
+     *     System.out.println("Redirects are not automatically followed.");
+     * }
+     * }</pre>
+     *
+     * @return {@code true} if HTTP redirects are automatically followed, 
+     *         {@code false} if they are not.
+     *
+     * @see java.net.HttpURLConnection#setFollowRedirects(boolean)
+     */
     public static boolean getFollowRedirects() {
         return followRedirects;
     }
+
 
     /**
      * Sets whether HTTP redirects (requests with response code 3xx) should
@@ -411,15 +509,27 @@ public abstract class HttpURLConnection extends URLConnection {
     }
 
     /**
-     * Returns the value of this {@code HttpURLConnection}'s
-    * {@code instanceFollowRedirects} field.
-    *
-    * @return  the value of this {@code HttpURLConnection}'s
-    *          {@code instanceFollowRedirects} field.
-    * @see     java.net.HttpURLConnection#instanceFollowRedirects
-    * @see #setInstanceFollowRedirects(boolean)
-    * @since 1.3
-    */
+     * Returns the value of this {@code HttpURLConnection}'s {@code instanceFollowRedirects} field, 
+     * which indicates whether this specific connection instance will automatically follow HTTP redirects 
+     * (3xx responses). This setting affects only this instance, not the global setting.
+     *
+     * <p>By default, the value is inherited from the global setting. You can control it for this instance 
+     * using {@link #setInstanceFollowRedirects(boolean)}.
+     *
+     * <p><b>Usage Example:</b></p>
+     * <pre>{@code
+     * HttpURLConnection httpConn = (HttpURLConnection) url.openConnection();
+     * boolean followRedirects = httpConn.getInstanceFollowRedirects();
+     * System.out.println("Instance follows redirects: " + followRedirects);
+     * }</pre>
+     *
+     * @return {@code true} if this instance will follow redirects automatically, 
+     *         {@code false} otherwise.
+     *
+     * @since 1.3
+     * @see java.net.HttpURLConnection#instanceFollowRedirects
+     * @see java.net.HttpURLConnection#setInstanceFollowRedirects(boolean)
+     */
     public boolean getInstanceFollowRedirects() {
         return instanceFollowRedirects;
     }
@@ -449,63 +559,109 @@ public abstract class HttpURLConnection extends URLConnection {
     }
 
     /**
-     * Get the request method.
-    * @return the HTTP request method
-    * @see #setRequestMethod(java.lang.String)
-    */
+     * Returns the HTTP request method used by this {@code HttpURLConnection} instance. 
+     * Common methods include "GET", "POST", "PUT", "DELETE", etc.
+     *
+     * <p><b>Usage Example:</b></p>
+     * <pre>{@code
+     * HttpURLConnection httpConn = (HttpURLConnection) url.openConnection();
+     * String requestMethod = httpConn.getRequestMethod();
+     * System.out.println("Request Method: " + requestMethod);
+     * }</pre>
+     *
+     * @return the HTTP request method as a {@code String}.
+     *
+     * @see java.net.HttpURLConnection#setRequestMethod(String)
+     */
     public String getRequestMethod() {
         return method;
     }
 
     /**
-     * Gets the status code from an HTTP response message.
-    * For example, in the case of the following status lines:
-    * <PRE>
-    * HTTP/1.0 200 OK
-    * HTTP/1.0 401 Unauthorized
-    * </PRE>
-    * It will return 200 and 401 respectively.
-    * Returns -1 if no code can be discerned
-    * from the response (i.e., the response is not valid HTTP).
-    * @throws IOException if an error occurred connecting to the server.
-    * @return the HTTP Status-Code, or -1
-    */
+     * Returns the HTTP status code from the response message. For example, 
+     * for the following status lines:
+     * <ul>
+     *   <li>{@code HTTP/1.0 200 OK} returns {@code 200}</li>
+     *   <li>{@code HTTP/1.0 401 Unauthorized} returns {@code 401}</li>
+     * </ul>
+     * If the response is not valid HTTP, or no status code can be discerned, 
+     * this method returns {@code -1}.
+     *
+     * <p><b>Usage Example:</b></p>
+     * <pre>{@code
+     * HttpURLConnection httpConn = (HttpURLConnection) url.openConnection();
+     * try {
+     *     int responseCode = httpConn.getResponseCode();
+     *     System.out.println("Response Code: " + responseCode);
+     * } catch (IOException e) {
+     *     e.printStackTrace();  // Handle potential connection error
+     * }
+     * }</pre>
+     *
+     * @return the HTTP status code, or {@code -1} if no valid status code is found.
+     * @throws IOException if an error occurs while connecting to the server.
+     *
+     * @see java.net.HttpURLConnection#getResponseMessage()
+     */
     public int getResponseCode() throws IOException {
         return -1;
     }
 
     /**
-     * Gets the HTTP response message, if any, returned along with the
-    * response code from a server.  From responses like:
-    * <PRE>
-    * HTTP/1.0 200 OK
-    * HTTP/1.0 404 Not Found
-    * </PRE>
-    * Extracts the Strings "OK" and "Not Found" respectively.
-    * Returns null if none could be discerned from the responses
-    * (the result was not valid HTTP).
-    * @throws IOException if an error occurred connecting to the server.
-    * @return the HTTP response message, or {@code null}
-    */
+     * Returns the HTTP response message returned by the server, if any, 
+     * along with the status code. For example, from the following status lines:
+     * <ul>
+     *   <li>{@code HTTP/1.0 200 OK} returns {@code "OK"}</li>
+     *   <li>{@code HTTP/1.0 404 Not Found} returns {@code "Not Found"}</li>
+     * </ul>
+     * If no message can be discerned (i.e., the response is not valid HTTP), 
+     * this method returns {@code null}.
+     *
+     * <p><b>Usage Example:</b></p>
+     * <pre>{@code
+     * HttpURLConnection httpConn = (HttpURLConnection) url.openConnection();
+     * try {
+     *     String responseMessage = httpConn.getResponseMessage();
+     *     System.out.println("Response Message: " + responseMessage);
+     * } catch (IOException e) {
+     *     e.printStackTrace();  // Handle potential connection error
+     * }
+     * }</pre>
+     *
+     * @return the HTTP response message, or {@code null} if no valid message is found.
+     * @throws IOException if an error occurs while connecting to the server.
+     *
+     * @see java.net.HttpURLConnection#getResponseCode()
+     */
     public String getResponseMessage() throws IOException {
         getResponseCode();
         return responseMessage;
     }
 
     /**
-     * Returns the value of the named field parsed as date. The result is the number
-     * of milliseconds since January 1, 1970 GMT represented by the named field.
-     * 
-     * This form of getHeaderField exists because some connection types 
-     * (e.g., http-ng) have pre-parsed headers. Classes for that connection type 
-     * can override this method and short-circuit the parsing.
+     * Returns the value of the specified header field parsed as a date. The result 
+     * is the number of milliseconds since January 1, 1970 GMT. If the field is 
+     * missing or cannot be parsed as a date, the provided {@code Default} value 
+     * is returned.
      *
-     * @param name - the name of the header field.
-     * @param Default - a default value.
-     * @return the value of the field, parsed as a date. The value of the Default 
-     *         argument is returned if the field is missing or malformed.
-     * @throws ProtocolException - if there is an error in the protocol.
-     * @see URLConnection#getHeaderFieldDate(String, long)
+     * <p><b>Usage Example:</b></p>
+     * <pre>{@code
+     * HttpURLConnection httpConn = (HttpURLConnection) url.openConnection();
+     * long date = httpConn.getHeaderFieldDate("Last-Modified", System.currentTimeMillis());
+     * if (date != 0) {
+     *     System.out.println("Last-Modified: " + new Date(date));
+     * } else {
+     *     System.out.println("No valid Last-Modified header.");
+     * }
+     * }</pre>
+     *
+     * @param name the name of the header field.
+     * @param Default the default value to return if the field is missing or 
+     *                malformed.
+     * @return the parsed date value in milliseconds since January 1, 1970 GMT, 
+     *         or the {@code Default} value if the field is missing or invalid.
+     *
+     * @see java.net.URLConnection#getHeaderFieldDate(String, long)
      */
     public long getHeaderFieldDate(String name, long defaultValue) {
         return defaultValue;
@@ -513,12 +669,43 @@ public abstract class HttpURLConnection extends URLConnection {
 
 
     /**
-     * Indicates that other requests to the server
-    * are unlikely in the near future. Calling disconnect()
-    * should not imply that this HttpURLConnection
-    * instance can be reused for other requests.
-    */
+     * Terminates the connection to the HTTP server and indicates that no further requests 
+     * are expected in the near future. Calling {@code disconnect()} will close the underlying 
+     * connection if no other requests are currently sharing the same persistent connection.
+     *
+     * <p>Once {@code disconnect()} is called, this {@code HttpURLConnection} instance 
+     * cannot be reused for additional requests. However, it will not affect other 
+     * instances that may be using the same underlying connection, as connection pooling 
+     * is managed transparently.
+     *
+     * <p>This method should be called when the caller is finished using the connection 
+     * to release network resources efficiently. It is especially important to call 
+     * {@code disconnect()} in environments with limited resources (e.g., mobile devices 
+     * or embedded systems).
+     * 
+     * <p><b>Note:</b> This method is not thread-safe. If multiple threads are using 
+     * the same {@code HttpURLConnection}, care must be taken to avoid calling 
+     * {@code disconnect()} while other threads are performing network operations on it.
+     * 
+     * <p><b>Usage Example:</b></p>
+     * <pre>{@code
+     * URL url = new URL("http://www.example.com");
+     * HttpURLConnection httpConn = (HttpURLConnection) url.openConnection();
+     * try {
+     *     httpConn.setRequestMethod("GET");
+     *     InputStream responseStream = httpConn.getInputStream();
+     *     // Process the response...
+     * } finally {
+     *     httpConn.disconnect();  // Always disconnect when done
+     * }
+     * }</pre>
+     * 
+     * @see java.net.HttpURLConnection#connect()
+     * @see java.net.HttpURLConnection#getInputStream()
+     * @see java.net.HttpURLConnection#getOutputStream()
+     */
     public abstract void disconnect();
+
 
     /**
      * Indicates if the connection is going through a proxy.
@@ -533,38 +720,71 @@ public abstract class HttpURLConnection extends URLConnection {
     public abstract boolean usingProxy();
 
     /**
-     * Returns a {@link SocketPermission} object representing the
-    * permission necessary to connect to the destination host and port.
-    *
-    * @throws    IOException if an error occurs while computing
-    *            the permission.
-    *
-    * @return a {@code SocketPermission} object representing the
-    *         permission necessary to connect to the destination
-    *         host and port.
-    */
+     * Returns a {@link SocketPermission} object representing the permission required 
+     * to connect to the destination host and port. This permission is typically 
+     * checked by security managers to determine if the connection is allowed.
+     *
+     * <p>If an error occurs while determining the permission, an {@link IOException} 
+     * is thrown.
+     *
+     * <p><b>Usage Example:</b></p>
+     * <pre>{@code
+     * HttpURLConnection httpConn = (HttpURLConnection) url.openConnection();
+     * try {
+     *     Permission permission = httpConn.getPermission();
+     *     System.out.println("Permission: " + permission);
+     * } catch (IOException e) {
+     *     e.printStackTrace();  // Handle potential error
+     * }
+     * }</pre>
+     *
+     * @return a {@link SocketPermission} object representing the necessary permission 
+     *         to connect to the destination host and port.
+     * @throws IOException if an error occurs while computing the permission.
+     *
+     * @see java.net.SocketPermission
+     * @see java.net.URLConnection#getPermission()
+     */
     public Permission getPermission() throws IOException {
         return null;
     }
 
-/**
- * Returns the error stream if the connection failed
- * but the server sent useful data nonetheless. The
- * typical example is when an HTTP server responds
- * with a 404, which will cause a FileNotFoundException
- * to be thrown in connect, but the server sent an HTML
- * help page with suggestions as to what to do.
- *
- * <p>This method will not cause a connection to be initiated.  If
- * the connection was not connected, or if the server did not have
- * an error while connecting or if the server had an error but
- * no error data was sent, this method will return null. This is
- * the default.
- *
- * @return an error stream if any, null if there have been no
- * errors, the connection is not connected or the server sent no
- * useful data.
- */
+    /**
+     * Returns the error stream if the connection failed but the server 
+     * still sent useful data. For example, when an HTTP server responds 
+     * with a 404 status code (which may cause a {@link FileNotFoundException} 
+     * during {@link #connect()}), the server might still send an HTML page 
+     * with information or suggestions. This method allows access to such 
+     * error data.
+     *
+     * <p>Calling this method does not initiate a new connection. It only returns 
+     * an error stream if the connection has been established and the server 
+     * encountered an error while processing the request, but still sent useful 
+     * error data. If no error occurred, the server did not send any error data, 
+     * or the connection was not made, this method returns {@code null}.
+     * 
+     * <p><b>Usage Example:</b></p>
+     * <pre>{@code
+     * HttpURLConnection httpConn = (HttpURLConnection) url.openConnection();
+     * try {
+     *     httpConn.setRequestMethod("GET");
+     *     InputStream errorStream = httpConn.getErrorStream();
+     *     if (errorStream != null) {
+     *         // Process the error stream, e.g., log it or display it to the user
+     *     }
+     * } finally {
+     *     httpConn.disconnect();
+     * }
+     * }</pre>
+     *
+     * @return an error stream if the server sent error data, or {@code null} 
+     *         if there are no errors, the connection was not established, or the 
+     *         server did not provide any error data.
+     *
+     * @see java.net.HttpURLConnection#getInputStream()
+     * @see java.net.HttpURLConnection#connect()
+     * @see java.net.HttpURLConnection#disconnect()
+     */
     public InputStream getErrorStream() {
         return null;
     }
