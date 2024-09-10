@@ -224,74 +224,70 @@ public abstract class HttpURLConnection extends URLConnection {
     }
 
     /**
-     * This method is used to enable streaming of a HTTP request body
-    * without internal buffering, when the content length is known in
-    * advance.
-    * <p>
-    * An exception will be thrown if the application
-    * attempts to write more data than the indicated
-    * content-length, or if the application closes the OutputStream
-    * before writing the indicated amount.
-    * <p>
-    * When output streaming is enabled, authentication
-    * and redirection cannot be handled automatically.
-    * A HttpRetryException will be thrown when reading
-    * the response if authentication or redirection are required.
-    * This exception can be queried for the details of the error.
-    * <p>
-    * This method must be called before the URLConnection is connected.
-    * <p>
-    * <B>NOTE:</B> {@link #setFixedLengthStreamingMode(long)} is recommended
-    * instead of this method as it allows larger content lengths to be set.
-    *
-    * @param   contentLength The number of bytes which will be written
-    *          to the OutputStream.
-    *
-    * @throws  IllegalStateException if URLConnection is already connected
-    *          or if a different streaming mode is already enabled.
-    *
-    * @throws  IllegalArgumentException if a content length less than
-    *          zero is specified.
-    *
-    * @see     #setChunkedStreamingMode(int)
-    * @since 1.5
-    */
+     * Enables streaming of an HTTP request body without internal buffering
+     * when the content length is known in advance and does not exceed the maximum 
+     * value that can be represented by a 32-bit integer. For larger content lengths, 
+     * use {@link #setFixedLengthStreamingMode(long)}.
+     * 
+     * <p>An exception will be thrown if the application attempts to write more data 
+     * than the indicated content length, or if the OutputStream is closed before 
+     * the specified amount is written.</p>
+     * 
+     * <p>When output streaming is enabled, authentication and redirection cannot be 
+     * handled automatically. A {@link HttpRetryException} will be thrown if authentication 
+     * or redirection is required and the response cannot be read successfully. This 
+     * exception provides details about the error encountered.</p>
+     * 
+     * <p>This method must be called before the URLConnection is connected. Once 
+     * connected, the content length cannot be changed.</p>
+     * 
+     * <p><b>Note:</b> If the content length exceeds the maximum value representable by a 32-bit
+     * integer, use {@link #setFixedLengthStreamingMode(long)} to accommodate larger sizes.</p>
+     * 
+     * @param contentLength the length of the content to be sent, in bytes. This must 
+     *                      be a non-negative integer not exceeding the maximum 
+     *                      value of a 32-bit signed integer.
+     * @throws IllegalStateException if the URLConnection is already connected or if 
+     *         a different streaming mode is already enabled.
+     * @throws IllegalArgumentException if a content length less than zero is specified.
+     * @see #setFixedLengthStreamingMode(long)
+     * @see #setChunkedStreamingMode(int)
+     * @since 1.5
+     */
     public void setFixedLengthStreamingMode (int contentLength) {
         
     }
 
     /**
-     * This method is used to enable streaming of a HTTP request body
-    * without internal buffering, when the content length is known in
-    * advance.
-    *
-    * <P> An exception will be thrown if the application attempts to write
-    * more data than the indicated content-length, or if the application
-    * closes the OutputStream before writing the indicated amount.
-    *
-    * <P> When output streaming is enabled, authentication and redirection
-    * cannot be handled automatically. A {@linkplain HttpRetryException} will
-    * be thrown when reading the response if authentication or redirection
-    * are required. This exception can be queried for the details of the
-    * error.
-    *
-    * <P> This method must be called before the URLConnection is connected.
-    *
-    * <P> The content length set by invoking this method takes precedence
-    * over any value set by {@link #setFixedLengthStreamingMode(int)}.
-    *
-    * @param  contentLength
-    *         The number of bytes which will be written to the OutputStream.
-    *
-    * @throws  IllegalStateException
-    *          if URLConnection is already connected or if a different
-    *          streaming mode is already enabled.
-    *
-    * @throws  IllegalArgumentException
-    *          if a content length less than zero is specified.
-    *
-    * @since 1.7
-    */
+     * Enables streaming of an HTTP request body without internal buffering
+     * when the content length is known in advance and exceeds the maximum value 
+     * that can be represented by a 32-bit integer. This method should be used when the 
+     * content length is greater than 2,147,483,647 bytes (2 GB).
+     * 
+     * <p>An exception will be thrown if the application attempts to write more data 
+     * than the indicated content length, or if the OutputStream is closed before 
+     * the specified amount is written.</p>
+     * 
+     * <p>When output streaming is enabled, authentication and redirection cannot be 
+     * handled automatically. A {@link HttpRetryException} will be thrown if authentication 
+     * or redirection is required and the response cannot be read successfully. This 
+     * exception provides details about the error encountered.</p>
+     * 
+     * <p>This method must be called before the URLConnection is connected. Once 
+     * connected, the content length cannot be changed.</p>
+     * 
+     * <p><b>Note:</b> Use this method for content lengths that exceed the 2 GB limit 
+     * of {@link #setFixedLengthStreamingMode(int)}.</p>
+     * 
+     * @param contentLength the length of the content to be sent, in bytes. This must 
+     *                      be a non-negative long value.
+     * @throws IllegalStateException if the URLConnection is already connected or if 
+     *         a different streaming mode is already enabled.
+     * @throws IllegalArgumentException if a content length less than zero is specified.
+     * @see #setFixedLengthStreamingMode(int)
+     * @see #setChunkedStreamingMode(int)
+     * @since 1.7
+     */
     public void setFixedLengthStreamingMode(long contentLength) {
         
     }
@@ -303,32 +299,52 @@ public abstract class HttpURLConnection extends URLConnection {
     private static final int DEFAULT_CHUNK_SIZE = 4096;
 
     /**
-     * This method is used to enable streaming of a HTTP request body
-    * without internal buffering, when the content length is <b>not</b>
-    * known in advance. In this mode, chunked transfer encoding
-    * is used to send the request body. Note, not all HTTP servers
-    * support this mode.
-    * <p>
-    * When output streaming is enabled, authentication
-    * and redirection cannot be handled automatically.
-    * A HttpRetryException will be thrown when reading
-    * the response if authentication or redirection are required.
-    * This exception can be queried for the details of the error.
-    * <p>
-    * This method must be called before the URLConnection is connected.
-    *
-    * @param   chunklen The number of bytes to be written in each chunk,
-    *          including a chunk size header as a hexadecimal string
-    *          (minimum of 1 byte), two CRLF's (4 bytes) and a minimum
-    *          payload length of 1 byte. If chunklen is less than or equal
-    *          to 5, a higher default value will be used.
-    *
-    * @throws  IllegalStateException if URLConnection is already connected
-    *          or if a different streaming mode is already enabled.
-    *
-    * @see     #setFixedLengthStreamingMode(int)
-    * @since 1.5
-    */
+     * Enables streaming of an HTTP request body using chunked transfer encoding, 
+     * without internal buffering, when the content length is <b>not</b> known in advance.
+     * This method sets the chunk size for each chunk of data sent to the server.
+     * 
+     * <p>Chunked transfer encoding breaks the request body into smaller chunks, 
+     * each prefixed with its size in hexadecimal and followed by two CRLFs (carriage return, line feed). 
+     * This mode is particularly useful for dynamically generated content or large requests 
+     * where the content length cannot be predetermined. However, not all HTTP servers support 
+     * chunked transfer encoding.</p>
+     * 
+     * <p><b>Important Notes:</b></p>
+     * <ul>
+     *   <li>Chunked streaming mode must be enabled before the connection is established using {@link URLConnection#connect()}.</li>
+     *   <li>When this mode is enabled, automatic handling of authentication and redirection is disabled. 
+     *   If authentication or redirection is required during the request, a {@link HttpRetryException} will be thrown.</li>
+     *   <li>If the specified {@code chunklen} is less than or equal to 5 bytes (including the chunk header), 
+     *   a default chunk size of 4096 bytes will be used.</li>
+     * </ul>
+     * 
+     * <p><b>Example Usage:</b></p>
+     * <pre>{@code
+     * HttpURLConnection httpConn = (HttpURLConnection) new URL("https://example.com").openConnection();
+     * httpConn.setChunkedStreamingMode(1024); // Set chunk size to 1024 bytes
+     * httpConn.setRequestMethod("POST");
+     * httpConn.setDoOutput(true);
+     * OutputStream outputStream = httpConn.getOutputStream();
+     * // Write request body in chunks
+     * }</pre>
+     * 
+     * <p><b>Default Behavior:</b> If {@code chunklen} is not specified or is invalid, a default chunk size 
+     * of 4096 bytes (including the chunk header and payload) will be used.</p>
+     * 
+     * <p><b>Exceptions:</b></p>
+     * <ul>
+     *   <li>{@code IllegalStateException} is thrown if the connection has already been established 
+     *   or if another streaming mode (such as fixed-length) is enabled.</li>
+     * </ul>
+     * 
+     * @param   chunklen The number of bytes for each chunk, including the chunk size header and payload. 
+     *          Must be greater than 5 bytes, otherwise the default value is used.
+     * @throws  IllegalStateException if the connection has already been established or if another streaming mode is already set.
+     * 
+     * @see     #setFixedLengthStreamingMode(int)
+     * @see     HttpRetryException
+     * @since 1.5
+     */
     public void setChunkedStreamingMode (int chunklen) {
         
     }
@@ -430,23 +446,47 @@ public abstract class HttpURLConnection extends URLConnection {
     }
 
     /**
-     * Sets whether HTTP redirects  (requests with response code 3xx) should
-    * be automatically followed by this class.  True by default.  Applets
-    * cannot change this variable.
-    * <p>
-    * If there is a security manager, this method first calls
-    * the security manager's {@code checkSetFactory} method
-    * to ensure the operation is allowed.
-    * This could result in a SecurityException.
-    *
-    * @param set a {@code boolean} indicating whether or not
-    * to follow HTTP redirects.
-    * @throws     SecurityException  if a security manager exists and its
-    *             {@code checkSetFactory} method doesn't
-    *             allow the operation.
-    * @see        SecurityManager#checkSetFactory
-    * @see #getFollowRedirects()
-    */
+     * Sets whether HTTP redirects  (requests with response codes in the 3xx range) should
+     * be automatically followed by instances of this class. 
+     * 
+     * <p>By default, this setting is enabled ({@code true}). When disabled ({@code false}),
+     * the connection will return the 3xx status code, and it will be the responsibility of the
+     * application to manage redirection.</p>
+     * 
+     * <p><b>Important Notes:</b></p>
+     * <ul>
+     *     <li>This setting applies to all {@code HttpURLConnection} instances created after the change.</li>
+     *     <li>Applets cannot modify this setting.</li>
+     *     <li>If a security manager is present, {@code checkSetFactory()} will be called to ensure the change is allowed. 
+     *     A {@link SecurityException} will be thrown if permission is denied.</li>
+     * </ul>
+     * 
+     * <p><b>Example Usage:</b></p>
+     * <pre>{@code
+     * // Disable automatic redirects
+     * HttpURLConnection.setFollowRedirects(false);
+     * 
+     * HttpURLConnection connection = (HttpURLConnection) new URL("https://example.com").openConnection();
+     * connection.connect();
+     * 
+     * int responseCode = connection.getResponseCode();
+     * if (responseCode == HttpURLConnection.HTTP_MOVED_TEMP) {
+     *     // Handle the redirection manually
+     *     String newLocation = connection.getHeaderField("Location");
+     *     System.out.println("Redirected to: " + newLocation);
+     * }
+     * }</pre>
+     * 
+     * <p>This method changes the default redirection behavior for all connections. 
+     * For controlling redirects on a per-connection basis, use {@link #setInstanceFollowRedirects(boolean)}.</p>
+     * 
+     * @param set a {@code boolean} specifying whether to follow HTTP redirects. Default is {@code true}.
+     * @throws SecurityException if a security manager exists and denies the operation via {@code checkSetFactory()}.
+     * 
+     * @see SecurityManager#checkSetFactory()
+     * @see #getFollowRedirects()
+     * @see #setInstanceFollowRedirects(boolean)
+     */
     public static void setFollowRedirects(boolean set) {
         @SuppressWarnings("removal")
         SecurityManager sec = System.getSecurityManager();
@@ -490,20 +530,53 @@ public abstract class HttpURLConnection extends URLConnection {
 
 
     /**
-     * Sets whether HTTP redirects (requests with response code 3xx) should
-    * be automatically followed by this {@code HttpURLConnection}
-    * instance.
-    * <p>
-    * The default value comes from followRedirects, which defaults to
-    * true.
-    *
-    * @param followRedirects a {@code boolean} indicating
-    * whether or not to follow HTTP redirects.
-    *
-    * @see    java.net.HttpURLConnection#instanceFollowRedirects
-    * @see #getInstanceFollowRedirects
-    * @since 1.3
-    */
+     * Configures whether HTTP redirects (requests with response code 3xx) should 
+     * be automatically followed by this {@code HttpURLConnection} instance.
+     * 
+     * <p>When set to {@code true}, this instance will automatically follow HTTP 
+     * redirects. When set to {@code false}, the instance will not follow redirects 
+     * and the client code must handle redirect responses manually. This setting 
+     * affects only the current {@code HttpURLConnection} instance and does not 
+     * alter the behavior of other instances or the default behavior of the class.</p>
+     * 
+     * <p><b>Behavior and Scope:</b></p>
+     * <ul>
+     *   <li>This method's setting applies only to the current instance of 
+     *       {@code HttpURLConnection}. It does not affect other instances of 
+     *       {@code HttpURLConnection}, even if they are created from the same 
+     *       URL or use the same connection factory.</li>
+     *   <li>To affect redirect behavior globally, use the static method 
+     *       {@link #setFollowRedirects(boolean)}. This static method sets the 
+     *       default redirect-following behavior for all instances of 
+     *       {@code HttpURLConnection} created thereafter.</li>
+     *   <li>Changing this setting on an instance does not retroactively affect 
+     *       connections that were already established or other instances created 
+     *       prior to this change.</li>
+     * </ul>
+     * 
+     * <p><b>Usage Example:</b></p>
+     * <pre>{@code
+     * HttpURLConnection connection = (HttpURLConnection) new URL("https://example.com").openConnection();
+     * connection.setInstanceFollowRedirects(false); // Disable automatic redirect following
+     * // Handle redirects manually if needed
+     * }</pre>
+     * 
+     * <p><b>Important Notes:</b></p>
+     * <ul>
+     *   <li>Ensure this method is called before establishing a connection to 
+     *       apply the desired redirect behavior.</li>
+     *   <li>For global redirect behavior settings affecting all instances, use 
+     *       {@link #setFollowRedirects(boolean)}.</li>
+     * </ul>
+     * 
+     * @param followRedirects a {@code boolean} indicating whether HTTP redirects should 
+     *        be automatically followed by this instance. {@code true} to follow redirects, 
+     *        {@code false} to handle them manually.
+     * 
+     * @see #getInstanceFollowRedirects()
+     * @see #setFollowRedirects(boolean)
+     * @since 1.3
+     */
     public void setInstanceFollowRedirects(boolean followRedirects) {
         instanceFollowRedirects = followRedirects;
     }
@@ -535,26 +608,58 @@ public abstract class HttpURLConnection extends URLConnection {
     }
 
     /**
-     * Set the method for the URL request, one of:
-    * <UL>
-    *  <LI>GET
-    *  <LI>POST
-    *  <LI>HEAD
-    *  <LI>OPTIONS
-    *  <LI>PUT
-    *  <LI>DELETE
-    *  <LI>TRACE
-    * </UL> are legal, subject to protocol restrictions.  The default
-    * method is GET.
-    *
-    * @param method the HTTP method
-    * @throws    ProtocolException if the method cannot be reset or if
-    *              the requested method isn't valid for HTTP.
-    * @throws    SecurityException if a security manager is set and the
-    *              method is "TRACE", but the "allowHttpTrace"
-    *              NetPermission is not granted.
-    * @see #getRequestMethod()
-    */
+     * Sets the HTTP request method to the specified method (eg. "GET", "POST", "HEAD", "OPTIONS", "PUT", "DELETE", "TRACE").
+     * The method must be set before the connection is established by calling {@link #connect()}, or a {@code ProtocolException} will be thrown.
+     * 
+     * <p>By default, the request method is "GET". This method cannot be called after writing to the output stream or receiving a response from the server.</p>
+     * 
+     *  <p><b>Allowed HTTP methods:</b></p>
+     * <ul>
+     *     <li>GET</li>
+     *     <li>POST</li>
+     *     <li>HEAD</li>
+     *     <li>OPTIONS</li>
+     *     <li>PUT</li>
+     *     <li>DELETE</li>
+     *     <li>TRACE</li>
+     * </ul>
+     * 
+     * <p><b>Usage Notes:</b></p>
+     * <ul>
+     *     <li>This method must be called before the connection is established using {@code connect()} or before writing to the request body (for methods like "POST").</li>
+     *     <li>This method is not thread-safe. If multiple threads access the same instance of {@code HttpURLConnection}, external synchronization is required.</li>
+     *     <li>Setting the method to "TRACE" requires a special security permission: {@code allowHttpTrace}.</li>
+     * </ul>
+     * 
+     * <p><b>Usage Example:</b></p>
+     * <pre>{@code
+     * URL url = new URL("https://example.com");
+     * HttpURLConnection httpConn = (HttpURLConnection) url.openConnection();
+     * 
+     * // Set the request method to POST
+     * httpConn.setRequestMethod("POST");
+     * 
+     * // Send POST data
+     * httpConn.setDoOutput(true);
+     * OutputStream os = httpConn.getOutputStream();
+     * os.write("param1=value1&param2=value2".getBytes());
+     * os.flush();
+     * os.close();
+     * 
+     * // Read the response
+     * int responseCode = httpConn.getResponseCode();
+     * System.out.println("Response Code: " + responseCode);
+     * httpConn.disconnect();
+     * }</pre>
+     * 
+     * @param method the HTTP request method to be set (e.g., "GET", "POST").
+     * 
+     * @throws ProtocolException if the method cannot be reset after connecting, or if the requested method is invalid for HTTP.
+     * @throws IllegalArgumentException if the specified method is null.
+     * @throws SecurityException if a security manager is set and the method is "TRACE" but the "allowHttpTrace" {@code NetPermission} is not granted.
+     * 
+     * @see #getRequestMethod()
+     */
     public void setRequestMethod(String method) throws ProtocolException {
     }
 
@@ -708,15 +813,37 @@ public abstract class HttpURLConnection extends URLConnection {
 
 
     /**
-     * Indicates if the connection is going through a proxy.
-    *
-    * This method returns {@code true} if the connection is known
-    * to be going or has gone through proxies, and returns {@code false}
-    * if the connection will never go through a proxy or if
-    * the use of a proxy cannot be determined.
-    *
-    * @return a boolean indicating if the connection is using a proxy.
-    */
+     * Determines whether this {@code HttpURLConnection} is using a proxy.
+     * 
+     * <p>This method returns {@code true} if the connection is known to be routed through a proxy server, 
+     * either via an explicit proxy configuration (e.g., set through system properties such as 
+     * {@code http.proxyHost} and {@code http.proxyPort}) or detected automatically. It returns {@code false} 
+     * if no proxy is used or if it cannot conclusively determine whether the connection is proxied.</p>
+     * 
+     * <p><b>Usage Notes:</b></p>
+     * <ul>
+     *     <li>This method may return {@code false} in cases where the proxy settings are not accessible 
+     *     to the current instance or when the proxy is determined dynamically at runtime (e.g., using a 
+     *     ProxySelector).</li>
+     *     <li>This method only applies to HTTP proxies and may not reflect the use of other proxy types such as SOCKS proxies.</li>
+     * </ul>
+     * 
+     * <p><b>Example Usage:</b></p>
+     * <pre>{@code
+     * HttpURLConnection connection = (HttpURLConnection) new URL("https://example.com").openConnection();
+     * boolean isUsingProxy = connection.usingProxy();
+     * if (isUsingProxy) {
+     *     System.out.println("The connection is using a proxy.");
+     * } else {
+     *     System.out.println("The connection is not using a proxy.");
+     * }
+     * }</pre>
+     * 
+     * @return {@code true} if the connection is routed through a proxy, {@code false} otherwise or if undetermined.
+     * 
+     * @see java.net.Proxy
+     * @see java.net.ProxySelector
+     */
     public abstract boolean usingProxy();
 
     /**
