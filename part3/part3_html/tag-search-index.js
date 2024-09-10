@@ -1,0 +1,1 @@
+tagSearchIndex = [{"l":"Usage Example:","h":"interface part3.Thermometer","d":"Section","u":"part3/Thermometer.html#usage-example--heading"}];updateSearchResults();
