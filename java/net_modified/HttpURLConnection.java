@@ -713,30 +713,42 @@ public abstract class HttpURLConnection extends URLConnection {
     }
 
     /**
-     * Returns the HTTP response message returned by the server, if any, 
-     * along with the status code. For example, from the following status lines:
+     * Returns the HTTP response message returned by the server, which provides 
+     * a textual description of the status code. For example:
      * <ul>
      *   <li>{@code HTTP/1.0 200 OK} returns {@code "OK"}</li>
      *   <li>{@code HTTP/1.0 404 Not Found} returns {@code "Not Found"}</li>
      * </ul>
-     * If no message can be discerned (i.e., the response is not valid HTTP), 
-     * this method returns {@code null}.
-     *
+     * <p>
+     * This method should be called after establishing a connection and receiving 
+     * a response from the server. It is generally used in conjunction with 
+     * {@link #getResponseCode()} to interpret the server's response. The response 
+     * code provides the numerical status, while the response message provides 
+     * the textual description.
+     * </p>
+     * <p>
+     * If no valid response message can be determined (e.g., if the response is 
+     * not a valid HTTP response), this method returns {@code null}.
+     * </p>
      * <p><b>Usage Example:</b></p>
      * <pre>{@code
      * HttpURLConnection httpConn = (HttpURLConnection) url.openConnection();
      * try {
+     *     httpConn.connect(); // Ensure the connection is established
+     *     int responseCode = httpConn.getResponseCode();
      *     String responseMessage = httpConn.getResponseMessage();
+     *     System.out.println("Response Code: " + responseCode);
      *     System.out.println("Response Message: " + responseMessage);
      * } catch (IOException e) {
      *     e.printStackTrace();  // Handle potential connection error
      * }
      * }</pre>
-     *
-     * @return the HTTP response message, or {@code null} if no valid message is found.
+     * 
+     * @return the HTTP response message, or {@code null} if no valid message 
+     *         is found.
      * @throws IOException if an error occurs while connecting to the server.
-     *
-     * @see java.net.HttpURLConnection#getResponseCode()
+     * 
+     * @see #getResponseCode()
      */
     public String getResponseMessage() throws IOException {
         getResponseCode();
@@ -918,199 +930,307 @@ public abstract class HttpURLConnection extends URLConnection {
 
     /*
     * The response codes for HTTP, as of version 1.1.
+    * These codes are used to indicate the result of an HTTP request.
     */
 
-    // REMIND: do we want all these??
-    // Others not here that we do want??
-
-    /* 2XX: generally "OK" */
+    /* 2XX: Generally successful responses */
 
     /**
      * HTTP Status-Code 200: OK.
-    */
+     * <p>
+     * The request has succeeded. The meaning of the success depends on the HTTP method:
+     * GET: The resource has been fetched and is transmitted in the message body.
+     * POST: The resource describing the result of the action is transmitted in the message body.
+     * </p>
+     */
     public static final int HTTP_OK = 200;
 
     /**
      * HTTP Status-Code 201: Created.
-    */
+     * <p>
+     * The request has been fulfilled and resulted in a new resource being created.
+     * This is typically used in response to a POST request.
+     * </p>
+     */
     public static final int HTTP_CREATED = 201;
 
     /**
      * HTTP Status-Code 202: Accepted.
-    */
+     * <p>
+     * The request has been accepted for processing, but the processing has not been completed.
+     * </p>
+     */
     public static final int HTTP_ACCEPTED = 202;
 
     /**
      * HTTP Status-Code 203: Non-Authoritative Information.
-    */
+     * <p>
+     * The request was successful but the returned metadata may be incorrect or not up-to-date.
+     * </p>
+     */
     public static final int HTTP_NOT_AUTHORITATIVE = 203;
 
     /**
      * HTTP Status-Code 204: No Content.
-    */
+     * <p>
+     * The server successfully processed the request, but is not returning any content.
+     * </p>
+     */
     public static final int HTTP_NO_CONTENT = 204;
 
     /**
      * HTTP Status-Code 205: Reset Content.
-    */
+     * <p>
+     * The server successfully processed the request, but the user agent should reset the document view.
+     * </p>
+     */
     public static final int HTTP_RESET = 205;
 
     /**
      * HTTP Status-Code 206: Partial Content.
-    */
+     * <p>
+     * The server is delivering only part of the resource due to a range header sent by the client.
+     * </p>
+     */
     public static final int HTTP_PARTIAL = 206;
 
-    /* 3XX: relocation/redirect */
+    /* 3XX: Relocation/Redirection */
 
     /**
      * HTTP Status-Code 300: Multiple Choices.
-    */
+     * <p>
+     * The request has more than one possible response. The user agent or user should choose one of them.
+     * </p>
+     */
     public static final int HTTP_MULT_CHOICE = 300;
 
     /**
      * HTTP Status-Code 301: Moved Permanently.
-    */
+     * <p>
+     * The requested resource has been assigned a new permanent URI and any future references should use that URI.
+     * </p>
+     */
     public static final int HTTP_MOVED_PERM = 301;
 
     /**
-     * HTTP Status-Code 302: Temporary Redirect.
-    */
+     * HTTP Status-Code 302: Found.
+     * <p>
+     * The resource resides temporarily under a different URI. The client should continue to use the original URI.
+     * </p>
+     */
     public static final int HTTP_MOVED_TEMP = 302;
 
     /**
      * HTTP Status-Code 303: See Other.
-    */
+     * <p>
+     * The response to the request can be found under a different URI using a GET method.
+     * </p>
+     */
     public static final int HTTP_SEE_OTHER = 303;
 
     /**
      * HTTP Status-Code 304: Not Modified.
-    */
+     * <p>
+     * The resource has not been modified since the last request. The client can use the cached version.
+     * </p>
+     */
     public static final int HTTP_NOT_MODIFIED = 304;
 
     /**
      * HTTP Status-Code 305: Use Proxy.
-    */
+     * <p>
+     * The requested resource must be accessed through the proxy given by the Location header.
+     * </p>
+     */
     public static final int HTTP_USE_PROXY = 305;
 
-    /* 4XX: client error */
+    /* 4XX: Client Error */
 
     /**
      * HTTP Status-Code 400: Bad Request.
-    */
+     * <p>
+     * The server could not understand the request due to invalid syntax.
+     * </p>
+     */
     public static final int HTTP_BAD_REQUEST = 400;
 
     /**
      * HTTP Status-Code 401: Unauthorized.
-    */
+     * <p>
+     * Authentication is required and has failed or has not been provided.
+     * </p>
+     */
     public static final int HTTP_UNAUTHORIZED = 401;
 
     /**
      * HTTP Status-Code 402: Payment Required.
-    */
+     * <p>
+     * This code is reserved for future use. It is not widely implemented.
+     * </p>
+     */
     public static final int HTTP_PAYMENT_REQUIRED = 402;
 
     /**
      * HTTP Status-Code 403: Forbidden.
-    */
+     * <p>
+     * The server understands the request but refuses to authorize it.
+     * </p>
+     */
     public static final int HTTP_FORBIDDEN = 403;
 
     /**
      * HTTP Status-Code 404: Not Found.
-    */
+     * <p>
+     * The requested resource could not be found.
+     * </p>
+     */
     public static final int HTTP_NOT_FOUND = 404;
 
     /**
      * HTTP Status-Code 405: Method Not Allowed.
-    */
+     * <p>
+     * The request method is known by the server but is not supported by the resource.
+     * </p>
+     */
     public static final int HTTP_BAD_METHOD = 405;
 
     /**
      * HTTP Status-Code 406: Not Acceptable.
-    */
+     * <p>
+     * The resource is capable of generating only content that is not acceptable according to the Accept headers sent in the request.
+     * </p>
+     */
     public static final int HTTP_NOT_ACCEPTABLE = 406;
 
     /**
      * HTTP Status-Code 407: Proxy Authentication Required.
-    */
+     * <p>
+     * The client must first authenticate itself with the proxy.
+     * </p>
+     */
     public static final int HTTP_PROXY_AUTH = 407;
 
     /**
-     * HTTP Status-Code 408: Request Time-Out.
-    */
+     * HTTP Status-Code 408: Request Timeout.
+     * <p>
+     * The server timed out waiting for the request.
+     * </p>
+     */
     public static final int HTTP_CLIENT_TIMEOUT = 408;
 
     /**
      * HTTP Status-Code 409: Conflict.
-    */
+     * <p>
+     * The request could not be completed due to a conflict with the current state of the resource.
+     * </p>
+     */
     public static final int HTTP_CONFLICT = 409;
 
     /**
      * HTTP Status-Code 410: Gone.
-    */
+     * <p>
+     * The requested resource is no longer available and will not be available again.
+     * </p>
+     */
     public static final int HTTP_GONE = 410;
 
     /**
      * HTTP Status-Code 411: Length Required.
-    */
+     * <p>
+     * The server refuses to accept the request without a defined Content-Length header.
+     * </p>
+     */
     public static final int HTTP_LENGTH_REQUIRED = 411;
 
     /**
      * HTTP Status-Code 412: Precondition Failed.
-    */
+     * <p>
+     * The server does not meet one of the preconditions that the requester put on the request.
+     * </p>
+     */
     public static final int HTTP_PRECON_FAILED = 412;
 
     /**
-     * HTTP Status-Code 413: Request Entity Too Large.
-    */
+     * HTTP Status-Code 413: Payload Too Large.
+     * <p>
+     * The request is larger than the server is willing or able to process.
+     * </p>
+     */
     public static final int HTTP_ENTITY_TOO_LARGE = 413;
 
     /**
-     * HTTP Status-Code 414: Request-URI Too Large.
-    */
+     * HTTP Status-Code 414: URI Too Long.
+     * <p>
+     * The URI provided was too long for the server to process.
+     * </p>
+     */
     public static final int HTTP_REQ_TOO_LONG = 414;
 
     /**
      * HTTP Status-Code 415: Unsupported Media Type.
-    */
+     * <p>
+     * The request entity has a media type which the server or resource does not support.
+     * </p>
+     */
     public static final int HTTP_UNSUPPORTED_TYPE = 415;
 
-    /* 5XX: server error */
+    /* 5XX: Server Error */
 
     /**
-     * HTTP Status-Code 500: Internal Server Error.
-    * @deprecated   it is misplaced and shouldn't have existed.
-    */
+     * HTTP Status-Code 500: Internal Server Error (Deprecated).
+     * <p>
+     * The server encountered an unexpected condition that prevented it from fulfilling the request.
+     * </p>
+     * @deprecated This constant is misplaced and should not have existed. Use {@link #HTTP_INTERNAL_ERROR}.
+     */
     @Deprecated
     public static final int HTTP_SERVER_ERROR = 500;
 
     /**
      * HTTP Status-Code 500: Internal Server Error.
-    */
+     * <p>
+     * The server encountered an unexpected condition that prevented it from fulfilling the request.
+     * </p>
+     */
     public static final int HTTP_INTERNAL_ERROR = 500;
 
     /**
      * HTTP Status-Code 501: Not Implemented.
-    */
+     * <p>
+     * The server does not support the functionality required to fulfill the request.
+     * </p>
+     */
     public static final int HTTP_NOT_IMPLEMENTED = 501;
 
     /**
      * HTTP Status-Code 502: Bad Gateway.
-    */
+     * <p>
+     * The server, while acting as a gateway or proxy, received an invalid response from the upstream server.
+     * </p>
+     */
     public static final int HTTP_BAD_GATEWAY = 502;
 
     /**
      * HTTP Status-Code 503: Service Unavailable.
-    */
+     * <p>
+     * The server is currently unable to handle the request due to temporary overloading or maintenance.
+     * </p>
+     */
     public static final int HTTP_UNAVAILABLE = 503;
 
     /**
      * HTTP Status-Code 504: Gateway Timeout.
-    */
+     * <p>
+     * The server, while acting as a gateway or proxy, did not receive a timely response from the upstream server.
+     * </p>
+     */
     public static final int HTTP_GATEWAY_TIMEOUT = 504;
 
     /**
      * HTTP Status-Code 505: HTTP Version Not Supported.
-    */
+     * <p>
+     * The server does not support the HTTP protocol version that was used in the request.
+     * </p>
+     */
     public static final int HTTP_VERSION = 505;
-
 }
